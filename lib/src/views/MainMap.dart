@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:segimutiplataform/src/views/SaveLocation.dart';
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
 
+import 'package:segimutiplataform/src/views/NavigationMap.dart';
 
-class MapView extends StatefulWidget {
-  const MapView({Key? key}) : super(key: key);
+import 'package:permission_handler/permission_handler.dart';
+import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+
+class MainMap extends StatefulWidget {
+  const MainMap({Key? key}) : super(key: key);
 
   @override
-  State<MapView> createState() => _MapViewState();
+  State<MainMap> createState() => _MainMapState();
 }
 
-class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
+class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _animation;
+
+  late GoogleMapViewController _mapController;
+  final Color BLUE_BUTTONS = Color(0xFF2196F3);
 
   bool _isMenuExpanded = false;
 
@@ -28,6 +35,17 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+    _solicitarPermisosDeUbicacion();
+  }
+
+  Future<void> _solicitarPermisosDeUbicacion() async {
+    var status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      status = await Permission.locationWhenInUse.request();
+    }
+    if (!status.isGranted) {
+      debugPrint("Permiso de ubicación denegado por el usuario");
+    }
   }
 
   void _toggleMenu() {
@@ -54,6 +72,7 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
           _buildFloatingMenu(context),
         ],
       ),
+      floatingActionButton: _floatingActionButton(),
     );
   }
 
@@ -62,22 +81,28 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
       width: double.infinity,
       height: double.infinity,
       color: Colors.grey[300],
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.map, size: 50, color: Colors.grey),
-            SizedBox(height: 10),
-            Text(
-              'AQUÍ VA EL MAPA DE GOOGLE GEI',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-          ],
+      child: GoogleMapsMapView(
+        onViewCreated: _onViewCreated,
+        initialZoomControlsEnabled: false,
+        initialCameraPosition: CameraPosition(
+          target: LatLng(latitude: 20.1738, longitude: -98.0549),
         ),
+        //initialCameraPosition: CameraPosition(target: LatLng(latitude: 90, longitude: 90)),
+        onMapLongClicked: _onMapLongClicked,
+      ),
+    );
+  }
+
+  void _onViewCreated(GoogleMapViewController controller) {
+    _mapController = controller;
+    _mapController.setMyLocationEnabled(true);
+  }
+
+  void _onMapLongClicked(LatLng latlang) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => NavigationMap(destino: latlang),
       ),
     );
   }
@@ -105,12 +130,17 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
             hintText: 'Ubicación de destino',
             hintStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 15,
+            ),
             suffixIcon: IconButton(
               icon: const Icon(Icons.search, color: Colors.grey),
               onPressed: () {
                 //Implementar lógica de búsqueda
                 print("Buscando: ${_searchController.text}");
+                _searchController.clear();
+                _searchController.clearComposing();
               },
             ),
           ),
@@ -118,7 +148,6 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
       ),
     );
   }
-
 
   Widget _buildFloatingMenu(BuildContext context) {
     return Positioned(
@@ -128,13 +157,12 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-
           _buildAnimatedButton(
             icon: Icons.person,
             label: "Perfil",
-            onPressed: (){
+            onPressed: () {
               Navigator.pushNamed(context, AppRoutes.login);
-            }
+            },
           ),
 
           _buildAnimatedButton(
@@ -142,12 +170,12 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
             label: "Ayuda",
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.help);
-            }
+            },
           ),
 
           _buildCircleButton(
             icon: _isMenuExpanded ? Icons.close : Icons.keyboard_arrow_up,
-            backgroundColor: _isMenuExpanded ? Colors.grey[800] : const Color(0xFF2196F3),
+            backgroundColor: _isMenuExpanded ? Colors.grey[800] : BLUE_BUTTONS,
             onPressed: _toggleMenu,
           ),
           const SizedBox(height: 15),
@@ -170,6 +198,27 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
     );
   }
 
+  Widget _floatingActionButton() {
+    return FloatingActionButton(
+      onPressed: _centerOnMyLocation,
+      backgroundColor: BLUE_BUTTONS,
+      child: Icon(Icons.my_location, color: Colors.white),
+    );
+  }
+
+  void _centerOnMyLocation() {
+    _mapController
+        .getMyLocation()
+        .then((location) {
+          _mapController.moveCamera(
+            CameraUpdate.newLatLngZoom(location!, 17.0),
+          );
+        })
+        .catchError((onError) {
+          debugPrint("NoooOooOO $onError");
+        });
+  }
+
   Widget _buildAnimatedButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -183,10 +232,7 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 15),
-            child: _buildCircleButton(
-              icon: icon,
-              onPressed: onPressed,
-            ),
+            child: _buildCircleButton(icon: icon, onPressed: onPressed),
           ),
         );
       },
@@ -203,7 +249,7 @@ class _MapViewState extends State<MapView> with SingleTickerProviderStateMixin {
       width: mini ? 50 : 60,
       height: mini ? 50 : 60,
       decoration: BoxDecoration(
-        color: backgroundColor ?? const Color(0xFF2196F3),
+        color: backgroundColor ?? BLUE_BUTTONS,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(

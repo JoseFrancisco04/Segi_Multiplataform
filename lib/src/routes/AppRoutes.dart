@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:segimutiplataform/src/views/MapView.dart';
+import 'package:segimutiplataform/src/views/MainMap.dart';
 import 'package:segimutiplataform/src/views/LoginView.dart';
 import 'package:segimutiplataform/src/views/RegisterView.dart';
 import 'package:segimutiplataform/src/views/HelpView.dart';
@@ -12,7 +12,7 @@ class AppRoutes{
 
   static Map<String, WidgetBuilder> getRoutes(){
     return{
-      map: (context) => const MapView(),
+      map: (context) => const MainMap(),
       login: (context) => const LoginView(),
       register: (context) => const RegisterView(),
       help: (context) => const HelpView(),
