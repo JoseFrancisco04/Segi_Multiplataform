@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:segimutiplataform/src/models/Ubication.dart';
 import 'package:segimutiplataform/src/services/Geocode.dart';
+import 'package:segimutiplataform/src/services/UbicationsServices.dart';
 import 'package:segimutiplataform/src/views/SaveLocation.dart';
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
 
@@ -21,6 +23,7 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   late Animation<double> _animation;
 
   late GoogleMapViewController _mapController;
+  late LatLng _myLocation;
   final Color BLUE_BUTTONS = Color(0xFF2196F3);
 
   bool _isMenuExpanded = false;
@@ -97,10 +100,21 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   void _onViewCreated(GoogleMapViewController controller) {
     _mapController = controller;
     _mapController.setMyLocationEnabled(true);
+    _printMarkers();
+  }
+
+  void _printMarkers() {
+    UbicationsServices.getUbications("jgarr@gmail.com").then((ubications) {
+      List<MarkerOptions> markers = [];
+      for (int i = 0; i < ubications.length; i++) {
+        markers.add(MarkerOptions(position: ubications[i]));
+      }
+      _mapController.addMarkers(markers);
+    });
   }
 
   void _onMapLongClicked(LatLng latlng) {
-    _navigationInit(latlng);
+    _printMarkers();
   }
 
   Widget _buildSearchBar() {
@@ -197,15 +211,30 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (context) => SaveLocationDialog(
-                  onSave: (String locationName) {
-                    print('Ubicación guardada: $locationName');
-                  },
-                ),
+                builder: (context) => SaveLocationDialog(onSave: _onSave),
               );
             },
           ),
         ],
+      ),
+    );
+  }
+
+  _onSave(String locationName) {
+    _saveUbication(
+      "",
+      locationName,
+      _myLocation.latitude,
+      _myLocation.longitude,
+    );
+  }
+
+  _saveUbication(String userEmail, String address, double lat, double lng) {
+    UbicationsServices.saveUbication(
+      Ubication(
+        coordinates: Coordinates(lat: lat, lng: lng),
+        address: address,
+        userEmail: "jgarr@gmail.com",
       ),
     );
   }
@@ -222,9 +251,8 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
     _mapController
         .getMyLocation()
         .then((location) {
-          _mapController.moveCamera(
-            CameraUpdate.newLatLngZoom(location!, 17.0),
-          );
+          _myLocation = location!;
+          _mapController.moveCamera(CameraUpdate.newLatLngZoom(location, 17.0));
         })
         .catchError((onError) {
           debugPrint("NoooOooOO $onError");

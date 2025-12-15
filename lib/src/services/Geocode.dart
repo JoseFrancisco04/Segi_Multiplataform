@@ -5,9 +5,8 @@ import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 class Geocode {
 
   static Future<LatLng?> getLatLng(String destination) async {
-    final String KEY = "AIzaSyBsxOV1LXtLOHmh9KmNzXEShdHTgVk7OB0";
+    final String KEY = "";
     destination = destination.trim().replaceAll(" ", "+");
-    print(destination);
     var url = Uri.https(
       'segi-back.onrender.com',
       'api/geocode/getLatlng/address=$destination&key=$KEY',
