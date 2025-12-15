@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:segimutiplataform/src/services/Geocode.dart';
 import 'package:segimutiplataform/src/views/SaveLocation.dart';
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
 
@@ -98,13 +99,8 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
     _mapController.setMyLocationEnabled(true);
   }
 
-  void _onMapLongClicked(LatLng latlang) {
-    Navigator.push(
-      context,
-      MaterialPageRoute<void>(
-        builder: (context) => NavigationMap(destino: latlang),
-      ),
-    );
+  void _onMapLongClicked(LatLng latlng) {
+    _navigationInit(latlng);
   }
 
   Widget _buildSearchBar() {
@@ -126,6 +122,7 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
         ),
         child: TextField(
           controller: _searchController,
+          onSubmitted: _onSubmit,
           decoration: InputDecoration(
             hintText: 'Ubicación de destino',
             hintStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
@@ -137,16 +134,31 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
             suffixIcon: IconButton(
               icon: const Icon(Icons.search, color: Colors.grey),
               onPressed: () {
-                //Implementar lógica de búsqueda
-                print("Buscando: ${_searchController.text}");
-                _searchController.clear();
-                _searchController.clearComposing();
+                _onSubmit("");
               },
             ),
           ),
         ),
       ),
     );
+  }
+
+  void _onSubmit(String textInput) {
+    Geocode.getLatLng(textInput)
+        .then((res) {
+          if (res != null) {
+            _navigationInit(res);
+          } else {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text("Destino no encontrado :(")));
+          }
+        })
+        .catchError((error) {
+          debugPrint("Geocode ${error.toString()}");
+        });
+    _searchController.clear();
+    _searchController.clearComposing();
   }
 
   Widget _buildFloatingMenu(BuildContext context) {
@@ -217,6 +229,15 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
         .catchError((onError) {
           debugPrint("NoooOooOO $onError");
         });
+  }
+
+  void _navigationInit(LatLng latlng) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => NavigationMap(destino: latlng),
+      ),
+    );
   }
 
   Widget _buildAnimatedButton({
