@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:segimutiplataform/src/controllers/LoginController.dart';
+import 'package:segimutiplataform/src/utils/DataBaseSegi.dart';
 import 'package:segimutiplataform/src/views/RegisterView.dart';
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
 
@@ -12,6 +14,9 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final LoginController _loginController = LoginController();
+  bool _sesionActiva = false;
+
   bool _obscurePassword = true;
 
   @override
@@ -177,6 +182,7 @@ class _LoginViewState extends State<LoginView> {
           _buildLabeledTextField(
             label: 'Ingresa tu correo:',
             controller: _emailController,
+            enabled: !_sesionActiva,
             keyboardType: TextInputType.emailAddress,
           ),
 
@@ -187,6 +193,7 @@ class _LoginViewState extends State<LoginView> {
             controller: _passwordController,
             isPassword: true,
             obscureText: _obscurePassword,
+            enabled: !_sesionActiva,
             onToggleVisibility: () {
               setState(() {
                 _obscurePassword = !_obscurePassword;
@@ -222,8 +229,34 @@ class _LoginViewState extends State<LoginView> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: () {
-              // TODO: Lógica de login
+            onPressed:_sesionActiva ? null: () async {
+              bool exitoso = await _loginController.manejadorSesion(
+                  _emailController.text.trim(),
+                  _passwordController.text
+              );
+
+              if (exitoso){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Sesion Iniciada"),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.map,(Route<dynamic> route)=>false);
+
+
+
+              }else{
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Correo o contraseña Incorrectos"),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black87,
@@ -258,7 +291,7 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
             GestureDetector(
-              onTap: () {
+              onTap: _sesionActiva ? null : () {
                 Navigator.pushNamed(context, AppRoutes.register);
               },
               child: const Text(
@@ -285,6 +318,7 @@ class _LoginViewState extends State<LoginView> {
     bool obscureText = false,
     TextInputType? keyboardType,
     VoidCallback? onToggleVisibility,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,11 +335,12 @@ class _LoginViewState extends State<LoginView> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withOpacity(enabled ? 0.3: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: TextField(
             controller: controller,
+            enabled: enabled,
             obscureText: isPassword ? obscureText : false,
             keyboardType: keyboardType,
             style: const TextStyle(color: Colors.white),
@@ -317,7 +352,7 @@ class _LoginViewState extends State<LoginView> {
               ),
               hintText: '', // Puedes poner hint si quieres
               hintStyle: const TextStyle(color: Colors.white54),
-              suffixIcon: isPassword
+              suffixIcon: isPassword && enabled
                   ? IconButton(
                 icon: Icon(
                   obscureText ? Icons.visibility_off : Icons.visibility,
@@ -332,10 +367,33 @@ class _LoginViewState extends State<LoginView> {
       ],
     );
   }
+
+  Future<void> _checarSesionGuardada()async{
+    final dbHelper = DatabaseHelper();
+    final session = await dbHelper.getSession();
+
+    if(session != null && session['email'] != null){
+      setState(() {
+        _emailController.text = session['email'];
+        _sesionActiva = true;
+      });
+
+    }
+
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    _checarSesionGuardada();
+
+
   }
 }
