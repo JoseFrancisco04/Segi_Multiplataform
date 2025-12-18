@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:segimutiplataform/src/controllers/RegisterController.dart';
 // Asumiendo que crearás este archivo, si no, puedes poner la clase al final de este mismo archivo
 import 'package:segimutiplataform/src/views/widgets/CustomTextField.dart';
 
@@ -15,6 +16,8 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+
+  final RegisterController _registerController = RegisterController();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -139,8 +142,35 @@ class _RegisterViewState extends State<RegisterView> {
         width: double.infinity,
         height: 60,
         child: ElevatedButton(
-          onPressed: () {
-            // TODO: Mover lógica a un Controller en src/controllers
+          onPressed: () async {
+            String resultado = await _registerController.procesarRegistro(
+                name: _nameController.text,
+                lastname: _lastNameController.text,
+                email: _emailController.text,
+                password: _passwordController.text,
+                confirmPassword: _confirmController.text
+            );
+
+            if(resultado == "SUCCESS"){
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Usuario Registrado Existosamente'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  )
+              );
+              Navigator.pop(context);
+            }else{
+              ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                    content: Text(resultado),
+                     backgroundColor: Colors.red,
+                     duration: const Duration(seconds: 2),
+                  )
+              );
+
+            }
+
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.black87,

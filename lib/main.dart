@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
 
-
-
-
-
 void main() {
   runApp(const MyApp());
 }
