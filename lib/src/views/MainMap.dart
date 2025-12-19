@@ -10,6 +10,16 @@ import 'package:segimutiplataform/src/utils/DataBaseSegi.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
+/*
+EQUIPO:
+
+Jose Francisco Hernandez Fernando
+Jesus Orlando Garrido Cruz
+Alan Sanchez Garrido
+Guadalupe Cruz Hernandez
+
+ */
+
 class MainMap extends StatefulWidget {
   const MainMap({Key? key}) : super(key: key);
 
