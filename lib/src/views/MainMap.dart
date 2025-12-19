@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:segimutiplataform/src/models/Ubication.dart';
-import 'package:segimutiplataform/src/services/Geocode.dart';
-import 'package:segimutiplataform/src/services/UbicationsServices.dart';
-import 'package:segimutiplataform/src/views/SaveLocation.dart';
+import 'package:segimutiplataform/src/controllers/GeocodeController.dart';
+import 'package:segimutiplataform/src/controllers/UbicationsControllers.dart';
 import 'package:segimutiplataform/src/routes/AppRoutes.dart';
-
+import 'package:segimutiplataform/src/views/SaveLocation.dart';
 import 'package:segimutiplataform/src/views/NavigationMap.dart';
+import 'package:segimutiplataform/src/utils/DataBaseSegi.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -28,6 +28,8 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
 
   bool _isMenuExpanded = false;
 
+  String _userEmail = "SESSION ERROR";
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +42,19 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
       curve: Curves.easeInOut,
     );
     _solicitarPermisosDeUbicacion();
+    _getUserEmail();
+  }
+
+  Future<void> _getUserEmail() async {
+    try{
+      Map<String, dynamic>? data = await DatabaseHelper().getSession();
+      if(data != null){
+        _userEmail = data['email'].toString();
+      }
+    }catch(err){
+      _userEmail = "SESSION ERROR";
+      debugPrint("Session error ${err.toString()}");
+    }
   }
 
   Future<void> _solicitarPermisosDeUbicacion() async {
@@ -104,7 +119,7 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   }
 
   void _printMarkers() {
-    UbicationsServices.getUbications("jgarr@gmail.com").then((ubications) {
+    UbicationsControllers.getUbications(_userEmail).then((ubications) {
       List<MarkerOptions> markers = [];
       for (int i = 0; i < ubications.length; i++) {
         markers.add(MarkerOptions(position: ubications[i]));
@@ -158,14 +173,13 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   }
 
   void _onSubmit(String textInput) {
-    Geocode.getLatLng(textInput)
+    GeocodeController.getLatLng(textInput)
         .then((res) {
           if (res != null) {
+            _messageSB("Iniciando navegación...");
             _navigationInit(res);
           } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text("Destino no encontrado :(")));
+            _messageSB("Destino no encontrado :(");
           }
         })
         .catchError((error) {
@@ -173,6 +187,12 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
         });
     _searchController.clear();
     _searchController.clearComposing();
+  }
+
+  void _messageSB(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: Duration(seconds: 3)),
+    );
   }
 
   Widget _buildFloatingMenu(BuildContext context) {
@@ -221,20 +241,24 @@ class _MainMapState extends State<MainMap> with SingleTickerProviderStateMixin {
   }
 
   _onSave(String locationName) {
-    _saveUbication(
-      "",
-      locationName,
-      _myLocation.latitude,
-      _myLocation.longitude,
-    );
+    if(_userEmail != "SESSION ERROR"){
+      _saveUbication(
+        _userEmail,
+        locationName,
+        _myLocation.latitude,
+        _myLocation.longitude,
+      );
+    }else{
+      _messageSB("Inicie Sesión para continuar");
+    }
   }
 
   _saveUbication(String userEmail, String address, double lat, double lng) {
-    UbicationsServices.saveUbication(
+    UbicationsControllers.saveUbication(
       Ubication(
         coordinates: Coordinates(lat: lat, lng: lng),
         address: address,
-        userEmail: "jgarr@gmail.com",
+        userEmail: userEmail,
       ),
     );
   }
