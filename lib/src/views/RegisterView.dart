@@ -63,7 +63,7 @@ class _RegisterViewState extends State<RegisterView> {
             },
           ),
 
-          const SizedBox(width: 90),
+          const SizedBox(width: 70),
 
           Stack(
             children: [
