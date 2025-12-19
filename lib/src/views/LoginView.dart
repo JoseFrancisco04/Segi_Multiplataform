@@ -76,7 +76,7 @@ class _LoginViewState extends State<LoginView> {
             },
           ),
         ),
-        const SizedBox(width: 90),
+        const SizedBox(width: 60),
 
         Stack(
           alignment: const Alignment(0, 0.5),
@@ -98,6 +98,47 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
           ],
+        ),
+
+        const SizedBox(width: 60),
+
+        Container(
+          width: 50,
+          height: 50,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.exit_to_app_sharp, color: Colors.black),
+            onPressed: () async{
+              bool exitSesion = await _loginController.cerrarSesion();
+              if(exitSesion){
+                setState(() {
+                  _sesionActiva = false;
+                  _emailController.clear();
+                  _passwordController.clear();
+                });
+                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.map,(Route<dynamic> route)=>false);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Sesion Cerrada"),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }else{
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Ocurrio un error Intentanlo más tarde"),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
+          ),
         ),
 
       ],
@@ -208,10 +249,9 @@ class _LoginViewState extends State<LoginView> {
   Widget _buildFooterActions(BuildContext context) {
     return Column(
       children: [
-        // Link Olvidaste contraseña
         GestureDetector(
           onTap: () {
-            // Navegar a recuperar contraseña
+
           },
           child: const Text(
             '¿Olvidaste tu contraseña?',
@@ -244,9 +284,6 @@ class _LoginViewState extends State<LoginView> {
                   ),
                 );
                 Navigator.pushNamedAndRemoveUntil(context, AppRoutes.map,(Route<dynamic> route)=>false);
-
-
-
               }else{
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -350,7 +387,6 @@ class _LoginViewState extends State<LoginView> {
                 horizontal: 15,
                 vertical: 15,
               ),
-              hintText: '', // Puedes poner hint si quieres
               hintStyle: const TextStyle(color: Colors.white54),
               suffixIcon: isPassword && enabled
                   ? IconButton(

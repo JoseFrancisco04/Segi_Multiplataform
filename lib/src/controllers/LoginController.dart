@@ -27,4 +27,11 @@ class LoginController{
       return false;
 
   }
+
+  Future<bool> cerrarSesion()async{
+    await _dbhelper.deleteSession();
+    return true;
+    
+  }
+
 }

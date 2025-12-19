@@ -35,7 +35,7 @@ class _HelpViewState extends State<HelpView> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 90),
+                  const SizedBox(width: 75),
                   // Título Ayuda
                   Container(
                     padding: const EdgeInsets.symmetric(
