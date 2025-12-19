@@ -1,16 +1,29 @@
-# segimutiplataform
+# Segi! - Versión para multiplataforma
 
-A new Flutter project.
+Aplicación móvil multiplataforma enfocada a ayudar personas con 
+discapacidad visual desarrollada con dart en Flutter por estudiantes
+de Ing. Sistemas Computacionales.
+
+## Desarrolladores
+- Jesus Orlando Garrido Cruz
+- José Francisco Hernandez Fernando
+- Alan Sanchez Garrido
+- Guadalupe Cruz Hernandez
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Cuando se bajen los cambios:
+- Copiar el archivo .env.example
+- Renombrar a .env 
+- Pegar las claves reales
 
-A few resources to get you started if this is your first Flutter project:
+## Créditos
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+>Se implementaron las tecnologías como:
+>- [Google Navigation for Flutter](https://pub.dev/packages/google_navigation_flutter)
+>- [HTTP](https://pub.dev/packages/http)
+>- [SQFLite](https://pub.dev/packages/sqflite)
+>- Entre otras
+>
+>Todos los derechos reservados.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
